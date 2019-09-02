@@ -124,7 +124,6 @@ dmypy.json
 .pyre/
 
 /pre_process_data
-/dataset
 /.idea
 /.ipynb_checkpoints
 *.log
