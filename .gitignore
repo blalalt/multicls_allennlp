@@ -126,4 +126,3 @@ dmypy.json
 /pre_process_data
 /.idea
 /.ipynb_checkpoints
-*.log
