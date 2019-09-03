@@ -8,7 +8,7 @@ from allennlp.data.vocabulary import Vocabulary
 from allennlp.modules.text_field_embedders import TextFieldEmbedder
 from allennlp.nn.util import get_text_field_mask
 from allennlp.modules.seq2vec_encoders import Seq2VecEncoder, PytorchSeq2VecWrapper
-from allennlp.training.metrics import F1Measure, CategoricalAccuracy
+from allennlp.training.metrics import FBetaMeasure, CategoricalAccuracy
 
 
 class BaseModelWithoutKnowledge(Model):
@@ -21,7 +21,7 @@ class BaseModelWithoutKnowledge(Model):
         self.projection = nn.Linear(in_features=self.encoder.get_output_dim(),
                                     out_features=out_sz)
         self.loss = nn.BCEWithLogitsLoss() if multi else nn.CrossEntropyLoss()
-        self.accuracy = AccuracyMultiLabel() if multi else CategoricalAccuracy(top_k=3)
+        self.accuracy = AccuracyMultiLabel() if multi else FBetaMeasure(average='micro')
 
     def forward(self, id: Any, sentence: Dict[str, torch.Tensor],
                 labels: torch.Tensor = None) -> Dict[str, torch.Tensor]:
@@ -36,4 +36,4 @@ class BaseModelWithoutKnowledge(Model):
         return output
 
     def get_metrics(self, reset: bool = False) -> Dict[str, float]:
-        return {'accuracy': self.accuracy.get_metric(reset=reset)}
+        return {'accuracy': self.accuracy.get_metric(reset=reset)['fscore']}

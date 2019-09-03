@@ -38,6 +38,7 @@ iterator.index_with(vocab=voc)
 word_embeddings = get_embedder()
 
 encoder = PytorchSeq2VecWrapper(module=nn.LSTM(word_embeddings.get_output_dim(),
+                                               dropout=config.dropout,
                                                hidden_size=config.lstm_hid_size,
                                                bidirectional=True,
                                                batch_first=True))
