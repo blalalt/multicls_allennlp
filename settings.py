@@ -4,7 +4,7 @@ from pathlib import Path
 class Config:
     def __init__(self):
         self.data_home = Path('.') / 'dataset'
-        self.max_seq_len = 512
+        self.max_seq_len = 1000
         self.embedder = 'elmo'
         self.batch_size = 8
         self.lstm_hid_size = 200
