@@ -57,3 +57,4 @@ trainer = Trainer(model=model, optimizer=optimizer,
                   )
 
 trainer.train()
+torch.save(model.parameters(), 'model_param.pkl')
