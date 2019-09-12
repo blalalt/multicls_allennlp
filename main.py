@@ -3,6 +3,7 @@ import torch.nn as nn
 import logging
 from torch import optim
 from settings import config
+from encoders import get_encoder
 from models import BaseModelWithoutKnowledge
 from allennlp.data.iterators import BucketIterator
 from allennlp.training.trainer import Trainer
@@ -37,11 +38,7 @@ iterator.index_with(vocab=voc)
 
 word_embeddings = get_embedder()
 
-encoder = PytorchSeq2VecWrapper(module=nn.LSTM(word_embeddings.get_output_dim(),
-                                               dropout=config.dropout,
-                                               hidden_size=config.lstm_hid_size,
-                                               bidirectional=True,
-                                               batch_first=True))
+encoder = get_encoder(voc, word_embeddings.get_output_dim())
 
 model = BaseModelWithoutKnowledge(voc=voc, word_embeddings=word_embeddings,
                                   encoder=encoder, out_sz=reader.label_length, multi=False)
@@ -51,10 +48,11 @@ optimizer = optim.Adam(model.parameters(), lr=config.lr)
 
 trainer = Trainer(model=model, optimizer=optimizer,
                   iterator=iterator, train_dataset=train_ds,
+                  validation_dataset=test_ds,
                   cuda_device=cuda_device,
                   num_epochs=config.epochs,
                   patience=5,
                   )
 
 trainer.train()
-torch.save(model.state_dict(), 'model_param.pkl')
+torch.save(model.state_dict(), 'model_param_bert_gru.pkl')

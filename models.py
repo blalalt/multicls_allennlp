@@ -25,9 +25,10 @@ class BaseModelWithoutKnowledge(Model):
 
     def forward(self, id: Any, sentence: Dict[str, torch.Tensor],
                 labels: torch.Tensor = None) -> Dict[str, torch.Tensor]:
+        # print(sentence)
         mask = get_text_field_mask(sentence)
         embeddings = self.word_embeddings(sentence)
-        state = self.encoder(embeddings, mask)
+        state = self.encoder(embeddings, mask) # 将知识的隐编码 作为 hideen state
         class_logits = self.projection(state)
         output = {'class_logits': class_logits}
         if labels is not None:
@@ -37,3 +38,32 @@ class BaseModelWithoutKnowledge(Model):
 
     def get_metrics(self, reset: bool = False) -> Dict[str, float]:
         return {'accuracy': self.accuracy.get_metric(reset=reset)['fscore']}
+
+
+class BaseModelWithKnowledge(Model):
+    def __init__(self, voc: Vocabulary, word_embeddings: TextFieldEmbedder,
+                 encoder: Seq2VecEncoder,
+                 out_sz: int, multi=True):
+        super(BaseModelWithKnowledge, self).__init__(voc)
+        self.word_embeddings = word_embeddings
+        self.encoder = encoder
+        self.projection = nn.Linear(in_features=self.encoder.get_output_dim() +
+                                    config.knowledge_embed_dim,
+                                    out_features=out_sz)
+        self.loss = nn.BCEWithLogitsLoss() if multi else nn.CrossEntropyLoss()
+        self.accuracy = AccuracyMultiLabel() if multi else FBetaMeasure(average='micro')
+
+    def forward(self, id: Any, sentence: Dict[str, torch.Tensor],
+                labels: torch.Tensor = None) -> Dict[str, torch.Tensor]:
+        mask = get_text_field_mask(sentence)
+        embeddings = self.word_embeddings(sentence)
+        state = self.encoder(embeddings, mask) # 将知识的隐编码 作为 hideen state
+        class_logits = self.projection(state)
+        output = {'class_logits': class_logits}
+        if labels is not None:
+            self.accuracy(predictions=class_logits, gold_labels=labels)
+            output['loss'] = self.loss(class_logits, labels)
+        return output
+
+    def get_metrics(self, reset: bool = False) -> Dict[str, float]:
+        return {'F score': self.accuracy.get_metric(reset=reset)['fscore']}

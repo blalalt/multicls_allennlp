@@ -100,6 +100,7 @@ class NewsGroupsDataSetReader(DatasetReader):
         for idx, (feature, label) in enumerate(zip(data_set['data'],
                                                    data_set['target'])):
             tokens = [Token(w) for w in self.tokenizer(feature)]
+            if not tokens: continue
             yield self.text_to_instance(
                 tokens=tokens,
                 id=str(idx),
